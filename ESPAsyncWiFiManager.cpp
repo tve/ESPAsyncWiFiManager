@@ -310,10 +310,11 @@ void AsyncWiFiManager::scan()
           wifiSSIDs[i].duplicate=false;
 
 #if defined(ESP8266)
-          bool res=WiFi.getNetworkInfo(i, wifiSSIDs[i].SSID, wifiSSIDs[i].encryptionType, wifiSSIDs[i].RSSI, wifiSSIDs[i].BSSID, wifiSSIDs[i].channel, wifiSSIDs[i].isHidden);
+          WiFi.getNetworkInfo(i, wifiSSIDs[i].SSID, wifiSSIDs[i].encryptionType, wifiSSIDs[i].RSSI, wifiSSIDs[i].BSSID, wifiSSIDs[i].channel, wifiSSIDs[i].isHidden);
 #else
-          bool res=WiFi.getNetworkInfo(i, wifiSSIDs[i].SSID, wifiSSIDs[i].encryptionType, wifiSSIDs[i].RSSI, wifiSSIDs[i].BSSID, wifiSSIDs[i].channel);
+          WiFi.getNetworkInfo(i, wifiSSIDs[i].SSID, wifiSSIDs[i].encryptionType, wifiSSIDs[i].RSSI, wifiSSIDs[i].BSSID, wifiSSIDs[i].channel);
 #endif
+          printf("SSID=%s RSSI=%d\n", wifiSSIDs[i].SSID.c_str(), wifiSSIDs[i].RSSI);
         }
 
 
@@ -452,7 +453,7 @@ void AsyncWiFiManager::criticalLoop(){
  * Anything that doesn't access WiFi, ESP or EEPROM can go here
  */
 void AsyncWiFiManager::safeLoop(){
-  #ifndef USE_EADNS	
+  #ifndef USE_EADNS
   dnsServer->processNextRequest();
   #endif
 }
@@ -475,10 +476,10 @@ boolean  AsyncWiFiManager::startConfigPortal(char const *apName, char const *apP
   scannow= -1 ;
   while (_configPortalTimeout == 0 || millis() < _configPortalStart + _configPortalTimeout) {
     //DNS
-    #ifndef USE_EADNS	
+    #ifndef USE_EADNS
     dnsServer->processNextRequest();
     #endif
-	
+
     //
     //  we should do a scan every so often here and
     //  try to reconnect to AP while we are at it
@@ -574,11 +575,13 @@ int AsyncWiFiManager::connectWifi(String ssid, String pass) {
     WiFi.disconnect(false);
   #endif
 
+    //printf("connectWifi(%s, %s)\n", ssid.c_str(), pass.c_str());
     WiFi.begin(ssid.c_str(), pass.c_str());
   } else {
 
     if (WiFi.SSID().length() > 0) {
       DEBUG_WM("Using last saved values, should be faster");
+      String ssid = WiFi.SSID();
 #if defined(ESP8266)
       //trying to fix connection in progress hanging
       ETS_UART_INTR_DISABLE();
@@ -588,7 +591,8 @@ int AsyncWiFiManager::connectWifi(String ssid, String pass) {
       WiFi.disconnect(false);
 #endif
 
-      WiFi.begin();
+      //printf("connectWifi[%s, %s]\n", ssid.c_str(), WiFi.psk().c_str());
+      WiFi.begin(ssid.c_str(), WiFi.psk().c_str());
     } else {
       DEBUG_WM("Try to connect with saved credentials");
       WiFi.begin();
@@ -599,7 +603,7 @@ int AsyncWiFiManager::connectWifi(String ssid, String pass) {
   DEBUG_WM ("Connection result: ");
   DEBUG_WM ( connRes );
   //not connected, WPS enabled, no pass - first attempt
-#ifdef NO_EXTRA_4K_HEAP	
+#ifdef NO_EXTRA_4K_HEAP
   if (_tryWPS && connRes != WL_CONNECTED && pass == "") {
     startWPS();
     //should be connected at the end of WPS
@@ -643,10 +647,10 @@ void AsyncWiFiManager::startWPS() {
   esp_wps_config_t config = {};
   config.wps_type = ESP_WPS_MODE;
   config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;
-  strcpy(config.factory_info.manufacturer,"ESPRESSIF");  
-  strcpy(config.factory_info.model_number, "ESP32");  
-  strcpy(config.factory_info.model_name, "ESPRESSIF IOT");  
-  strcpy(config.factory_info.device_name,"ESP STATION");  
+  strcpy(config.factory_info.manufacturer,"ESPRESSIF");
+  strcpy(config.factory_info.model_number, "ESP32");
+  strcpy(config.factory_info.model_name, "ESPRESSIF IOT");
+  strcpy(config.factory_info.device_name,"ESP STATION");
 
   esp_wifi_wps_enable(&config);
   esp_wifi_wps_start(0);
