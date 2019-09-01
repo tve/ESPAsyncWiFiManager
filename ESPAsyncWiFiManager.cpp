@@ -539,14 +539,20 @@ boolean  AsyncWiFiManager::startConfigPortal(char const *apName, char const *apP
     yield();
   }
 
+  stopConfigPortal();
+
+  return  WiFi.status() == WL_CONNECTED;
+}
+
+
+void AsyncWiFiManager::stopConfigPortal() {
   server->reset();
   #ifdef USE_EADNS
   *dnsServer=AsyncDNSServer();
   #else
   *dnsServer=DNSServer();
   #endif
-
-  return  WiFi.status() == WL_CONNECTED;
+  WiFi.mode(WIFI_STA);
 }
 
 

@@ -127,6 +127,7 @@ public:
   //if you want to always start the config portal, without trying to connect first
   boolean       startConfigPortal(char const *apName, char const *apPassword = NULL);
   void startConfigPortalModeless(char const *apName, char const *apPassword);
+  void stopConfigPortal();
 
   // get the AP name of the config portal, so it can be used in the callback
   String        getConfigPortalSSID();
